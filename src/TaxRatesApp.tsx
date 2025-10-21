@@ -49,8 +49,8 @@ export default function TaxRatesApp() {
 
   const maxAvailableYear = availableYears.length ? availableYears[0] : calculatorYears[0];
   const minAvailableYear = availableYears.length
-    ? availableYears[availableYears.length - 1]
-    : calculatorYears[calculatorYears.length - 1];
+    ? availableYears.at(-1)!
+    : calculatorYears.at(-1)!;
 
   useEffect(() => {
     let cancelled = false;
@@ -58,9 +58,7 @@ export default function TaxRatesApp() {
       try {
         setError("");
         setLoading(true);
-        const [years] = await Promise.all([
-          fetchAvailableYears(),
-        ]);
+        const years = await fetchAvailableYears();
         if (cancelled) return;
         if (!years.length) {
           console.warn("fetchAvailableYears returned an empty array.");
@@ -68,7 +66,7 @@ export default function TaxRatesApp() {
         }
         const sortedYears = years.slice().sort((a, b) => b - a);
         const maxYear = sortedYears[0];
-        const minYear = sortedYears[sortedYears.length - 1];
+        const minYear = sortedYears.at(-1)!;
         setAvailableYears(sortedYears);
         const clamp = (value: number) => Math.min(Math.max(value, minYear), maxYear);
         setEndYear((prev) => clamp(prev));
