@@ -13,9 +13,22 @@ import {
 } from "./types";
 
 
-// TODO : Improve error handling and loading states with spinners/placeholders.
 // TODO : Add routing for separate pages (trends vs calculator) with a button to switch between them in the header.
 
+const Spinner = ({ label }: { label?: string }) => (
+  <div className="flex items-center justify-center gap-2 text-sm font-medium text-slate-500">
+    <svg
+      className="h-5 w-5 animate-spin text-brand-600"
+      viewBox="0 0 24 24"
+      role="output"
+      aria-hidden={label ? undefined : true}
+    >
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+    </svg>
+    {label && <span>{label}</span>}
+  </div>
+);
 
 
 export default function TaxRatesApp() {
@@ -30,8 +43,12 @@ export default function TaxRatesApp() {
   const [topRateSeries, setTopRateSeries] = useState<HistoryPoint[]>([]);
   const [bracketCountSeries, setBracketCountSeries] = useState<HistoryPoint[]>([]);
   const [calc, setCalc] = useState<TaxCalculation | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>("");
+  const [yearsLoading, setYearsLoading] = useState<boolean>(true);
+  const [trendsLoading, setTrendsLoading] = useState<boolean>(false);
+  const [calcLoading, setCalcLoading] = useState<boolean>(false);
+  const [yearsError, setYearsError] = useState<string>("");
+  const [trendsError, setTrendsError] = useState<string>("");
+  const [calcError, setCalcError] = useState<string>("");
 
   const fallbackCalculatorYears: number[] = useMemo(() => {
     const lastYear = CURRENT_YEAR - 1;
@@ -56,8 +73,8 @@ export default function TaxRatesApp() {
     let cancelled = false;
     (async () => {
       try {
-        setError("");
-        setLoading(true);
+        setYearsError("");
+        setYearsLoading(true);
         const years = await fetchAvailableYears();
         if (cancelled) return;
         if (!years.length) {
@@ -74,9 +91,9 @@ export default function TaxRatesApp() {
         setCalcYear((prev) => clamp(prev));
       } catch (e) {
         console.error("Error fetching available years:", e);
-        if (!cancelled) setError("Failed to fetch available years. Check API URL & CORS.");
+        if (!cancelled) setYearsError("Failed to fetch available years. Check API URL & CORS.");
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setYearsLoading(false);
       }
     })();
     return () => {
@@ -88,8 +105,8 @@ export default function TaxRatesApp() {
     let cancelled = false;
     (async () => {
       try {
-        setError("");
-        setLoading(true);
+        setTrendsError("");
+        setTrendsLoading(true);
         const [top, brackets] = await Promise.all([
           fetchHistory(trendStatus, "TOP_RATE", startYear, endYear),
           fetchHistory(trendStatus, "BRACKET_COUNT", startYear, endYear),
@@ -103,9 +120,9 @@ export default function TaxRatesApp() {
         }
       } catch (e) {
         console.error("Error loading trends:", e);
-        if (!cancelled) setError("Failed to load trends. Verify API URL & CORS.");
+        if (!cancelled) setTrendsError("Failed to load trends. Verify API URL & CORS.");
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setTrendsLoading(false);
       }
     })();
     return () => {
@@ -115,17 +132,17 @@ export default function TaxRatesApp() {
 
   async function runCalc() {
     try {
-      setError("");
-      setLoading(true);
+      setCalcError("");
+      setCalcLoading(true);
       console.log("Running calculation for:", { year: calcYear, status: calcStatus, income });
       const result = await fetchCalculation({ year: calcYear, status: calcStatus, income } as TaxInput);
       console.log("Calculation result:", result);
       setCalc(result);
     } catch (e) {
       console.error("Calculation error:", e);
-      setError("Calculation failed. Check endpoint and query params.");
+      setCalcError("Calculation failed. Check endpoint and query params.");
     } finally {
-      setLoading(false);
+      setCalcLoading(false);
     }
   }
 
@@ -134,6 +151,10 @@ export default function TaxRatesApp() {
 
   const cardSurfaceClass =
     "rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-card backdrop-blur";
+  const isBootstrappingYears = yearsLoading && !availableYears.length;
+  const combinedErrors = [yearsError, trendsError, calcError].filter(Boolean);
+  const showTrendSkeleton = trendsLoading && !topRateSeries.length && !bracketCountSeries.length;
+  const showCalcSkeleton = calcLoading && !calc;
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900">
@@ -155,6 +176,12 @@ export default function TaxRatesApp() {
         </header>
 
         <main className="space-y-10">
+          {isBootstrappingYears && (
+            <section className={`${cardSurfaceClass} flex items-center justify-center`}>
+              <Spinner label="Fetching available tax years..." />
+            </section>
+          )}
+
           <section className={`${cardSurfaceClass} space-y-4`}>
             <div>
               <h2 className="text-base font-semibold text-slate-900">Trend Filters</h2>
@@ -272,18 +299,38 @@ export default function TaxRatesApp() {
                 <button
                   className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-brand-600 px-5 text-sm font-semibold text-white shadow-card transition hover:bg-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 disabled:cursor-not-allowed disabled:bg-brand-300"
                   onClick={runCalc}
-                  disabled={loading}
+                  disabled={calcLoading}
                 >
-                  {loading ? "Running…" : "Run Calculator"}
+                  {calcLoading ? (
+                    <span className="inline-flex items-center gap-2">
+                      <svg className="h-4 w-4 animate-spin text-white" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                      </svg>
+                      Calculating…
+                    </span>
+                  ) : (
+                    "Run Calculator"
+                  )}
                 </button>
               </div>
             </div>
           </section>
 
-          {error && (
+          {combinedErrors.length > 0 && (
             <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 shadow-sm">
-              {error}
+              <ul className="list-inside list-disc space-y-1">
+                {combinedErrors.map((msg, idx) => (
+                  <li key={`${msg}-${idx}`}>{msg}</li>
+                ))}
+              </ul>
             </div>
+          )}
+
+          {showCalcSkeleton && (
+            <section className={`${cardSurfaceClass} flex items-center justify-center`}>
+              <Spinner label="Preparing calculation..." />
+            </section>
           )}
 
           {calc && (
@@ -323,20 +370,33 @@ export default function TaxRatesApp() {
           )}
 
           <section className="grid gap-6 lg:grid-cols-2">
-            <TrendCard
-              title="Top Marginal Rate Over Time"
-              data={topRateSeries}
-              kind="line"
-              yTickFormatter={(v) => `${v}%`}
-              seriesName="Top Rate"
-            />
+            {showTrendSkeleton ? (
+              <>
+                <div className={`${cardSurfaceClass} flex min-h-[18rem] items-center justify-center`}>
+                  <Spinner label="Loading top rate history..." />
+                </div>
+                <div className={`${cardSurfaceClass} flex min-h-[18rem] items-center justify-center`}>
+                  <Spinner label="Loading bracket history..." />
+                </div>
+              </>
+            ) : (
+              <>
+                <TrendCard
+                  title="Top Marginal Rate Over Time"
+                  data={topRateSeries}
+                  kind="line"
+                  yTickFormatter={(v) => `${v}%`}
+                  seriesName="Top Rate"
+                />
 
-            <TrendCard
-              title="Number of Brackets Over Time"
-              data={bracketCountSeries}
-              kind="bar"
-              seriesName="Bracket Count"
-            />
+                <TrendCard
+                  title="Number of Brackets Over Time"
+                  data={bracketCountSeries}
+                  kind="bar"
+                  seriesName="Bracket Count"
+                />
+              </>
+            )}
           </section>
 
           
