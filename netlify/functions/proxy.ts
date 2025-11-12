@@ -1,7 +1,6 @@
 import type { Handler } from "@netlify/functions";
 
 const BACKEND_BASE_URL =
-    process.env.RATE_ATLAS_API_BASE_URL ??
     process.env.RATE_ATLAS_BACKEND_URL ??
     process.env.API_BASE_URL;
 
@@ -25,7 +24,7 @@ export const handler: Handler = async event => {
                 ...CORS_HEADERS,
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ message: "RATE_ATLAS_API_BASE_URL env var is not configured." }),
+            body: JSON.stringify({ message: "RATE_ATLAS_BACKEND_URL env var is not configured." }),
         };
     }
 
