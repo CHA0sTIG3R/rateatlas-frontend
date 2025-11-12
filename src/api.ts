@@ -1,7 +1,10 @@
 import axios, { type AxiosInstance } from "axios";
 import type { FilingStatus, HistoryMetric, HistoryPoint, TaxCalculation, TaxInput } from "./types";
 
-const BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api/v1";
+const BASE =
+    import.meta.env.RATE_ATLAS_API_BASE_URL ??
+    import.meta.env.VITE_API_BASE_URL ??
+    "http://localhost:8080/api/v1";
 console.log("API base URL:", BASE);
 
 function CreateApi(): AxiosInstance {
