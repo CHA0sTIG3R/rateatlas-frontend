@@ -1,4 +1,8 @@
-# Marginal Tax Rate Calculator — React Frontend
+# RateAtlas · TaxLens (`rateatlas-frontend`)
+
+> React + TypeScript frontend that visualizes RateAtlas tax history insights and calculators.
+>
+> Part of the [RateAtlas](../README.md) stack.
 
 This repository is the **frontend outline** for the Marginal Tax Rate Calculator ecosystem. It complements the backend services:
 
