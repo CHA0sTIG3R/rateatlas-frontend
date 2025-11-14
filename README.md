@@ -74,21 +74,13 @@ export default defineConfig({
 
 ### Environment Variables
 
-For production builds:
+For production builds, expose the backend directly to the client bundle:
 
 ```sh
-RATE_ATLAS_API_BASE_URL=https://your-backend.example.com/api
-RATE_ATLAS_BACKEND_URL=https://your-backend.example.com/api
+RATE_ATLAS_API_BASE_URL=https://api.example.com/api/v1
 ```
 
-### Netlify Functions Proxy
-
-Deploying to Netlify? Use the built-in serverless proxy in `netlify/functions/proxy.ts`:
-
-1. Set `RATE_ATLAS_BACKEND_URL` in your Netlify site to point at the real backend, e.g. `http://tax-api.internal:8080/api/v1`. The serverless proxy uses this value when making server-to-server calls.
-2. Set `RATE_ATLAS_API_BASE_URL=/.netlify/functions/proxy` so the React app calls the proxy instead of the public backend (keeps browsers on HTTPS even if the backend is HTTP-only).
-3. The provided `netlify.toml` rewrites `/api/*` → `/.netlify/functions/proxy/:splat`, so you can optionally keep using `/api/...` URLs without changing code.
-4. Run `netlify dev` locally (or `npm run dev`) to exercise the same proxy before deploying.
+During development you can either keep the same value or point at your local backend (e.g., `http://localhost:8080/api/v1`). Vite automatically injects variables prefixed with `VITE_`, and we also whitelist `RATE_ATLAS_` so the client can read `RATE_ATLAS_API_BASE_URL`.
 
 ## 📊 Features
 
