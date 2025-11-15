@@ -12,8 +12,27 @@ import {
   type TaxInput
 } from "./types";
 
+type AppPage = "trends" | "calculator";
 
-// TODO : Add routing for separate pages (trends vs calculator) with a button to switch between them in the header.
+const DEFAULT_PAGE: AppPage = "trends";
+
+const getPageFromHash = (): AppPage => {
+  if (typeof window === "undefined") {
+    return DEFAULT_PAGE;
+  }
+  const normalizedHash = window.location.hash.replace("#", "").toLowerCase();
+  return normalizedHash === "calculator" ? "calculator" : DEFAULT_PAGE;
+};
+
+const syncHashToPage = (page: AppPage) => {
+  if (typeof window === "undefined") {
+    return;
+  }
+  const targetHash = `#${page}`;
+  if (window.location.hash !== targetHash) {
+    window.history.replaceState(null, "", targetHash);
+  }
+};
 
 const Spinner = ({ label }: { label?: string }) => (
   <div className="flex items-center justify-center gap-2 text-sm font-medium text-slate-500">
@@ -32,6 +51,7 @@ const Spinner = ({ label }: { label?: string }) => (
 
 
 export default function TaxRatesApp() {
+  const [activePage, setActivePage] = useState<AppPage>(() => getPageFromHash());
   const [trendStatus, setTrendStatus] = useState<FilingStatus>(FILING_STATUSES[0].value);
   const [startYear, setStartYear] = useState<number>(DEFAULT_START);
   const [endYear, setEndYear] = useState<number>(CURRENT_YEAR -1);
@@ -49,6 +69,19 @@ export default function TaxRatesApp() {
   const [yearsError, setYearsError] = useState<string>("");
   const [trendsError, setTrendsError] = useState<string>("");
   const [calcError, setCalcError] = useState<string>("");
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const handleHashChange = () => setActivePage(getPageFromHash());
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
+
+  useEffect(() => {
+    syncHashToPage(activePage);
+  }, [activePage]);
 
   const fallbackCalculatorYears: number[] = useMemo(() => {
     const lastYear = CURRENT_YEAR - 1;
@@ -146,15 +179,22 @@ export default function TaxRatesApp() {
     }
   }
 
+  const togglePage = () => {
+    setActivePage((prev) => (prev === "trends" ? "calculator" : "trends"));
+  };
+
   const controlClass =
     "h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200 disabled:cursor-not-allowed disabled:opacity-60";
 
   const cardSurfaceClass =
     "rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-card backdrop-blur";
   const isBootstrappingYears = yearsLoading && !availableYears.length;
-  const combinedErrors = [yearsError, trendsError, calcError].filter(Boolean);
   const showTrendSkeleton = trendsLoading && !topRateSeries.length && !bracketCountSeries.length;
   const showCalcSkeleton = calcLoading && !calc;
+  const isTrendsPage = activePage === "trends";
+  const isCalculatorPage = activePage === "calculator";
+  const trendErrors = [yearsError, trendsError].filter(Boolean);
+  const calculatorErrors = [yearsError, calcError].filter(Boolean);
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900">
@@ -165,13 +205,22 @@ export default function TaxRatesApp() {
           <span className="inline-flex w-fit items-center gap-2 rounded-full bg-brand-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-brand-700 ring-1 ring-brand-500/30">
             Federal Income Tax
           </span>
-          <div className="space-y-2">
-            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-              Marginal Tax Insights
-            </h1>
-            <p className="max-w-2xl text-sm text-slate-600 sm:text-base">
-              Explore historical trends and compute marginal &amp; effective rates across filing statuses and years.
-            </p>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-2">
+              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+                Marginal Tax Insights
+              </h1>
+              <p className="max-w-2xl text-sm text-slate-600 sm:text-base">
+                Explore historical trends and compute marginal &amp; effective rates across filing statuses and years.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="inline-flex items-center justify-center rounded-xl border border-brand-200 bg-white/90 px-4 py-2 text-sm font-semibold text-brand-700 shadow-card transition hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-200"
+              onClick={togglePage}
+            >
+              {isTrendsPage ? "Open Calculator" : "View Trends"}
+            </button>
           </div>
         </header>
 
@@ -182,224 +231,240 @@ export default function TaxRatesApp() {
             </section>
           )}
 
-          <section className={`${cardSurfaceClass} space-y-4`}>
-            <div>
-              <h2 className="text-base font-semibold text-slate-900">Trend Filters</h2>
-              <p className="text-xs text-slate-500">Adjust the filing status and year range for the historical charts.</p>
-            </div>
-            <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-              <div className="flex flex-col gap-2">
-                <label htmlFor="trend-filing-status" className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Filing Status
-                </label>
-                <select
-                  id="trend-filing-status"
-                  className={`${controlClass} appearance-none`}
-                  value={trendStatus}
-                  onChange={(e) => setTrendStatus(e.target.value as FilingStatus)}
-                >
-                  {FILING_STATUSES.map((fs) => (
-                    <option key={fs.value} value={fs.value}>
-                      {fs.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label htmlFor="start-year" className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Start Year
-                </label>
-                <input
-                  id="start-year"
-                  type="number"
-                  className={controlClass}
-                  min={minAvailableYear}
-                  max={maxAvailableYear}
-                  value={startYear}
-                  onChange={(e) => setStartYear(Number(e.target.value))}
-                />
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label htmlFor="end-year" className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  End Year
-                </label>
-                <input
-                  id="end-year"
-                  type="number"
-                  className={controlClass}
-                  min={minAvailableYear}
-                  max={maxAvailableYear}
-                  value={endYear}
-                  onChange={(e) => setEndYear(Number(e.target.value))}
-                />
-              </div>
-            </div>
-          </section>
-
-          <section className={`${cardSurfaceClass} space-y-4`}>
-            <div>
-              <h2 className="text-base font-semibold text-slate-900">Marginal Calculator</h2>
-              <p className="text-xs text-slate-500">Choose separate inputs to run the marginal tax calculation.</p>
-            </div>
-            <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-              <div className="flex flex-col gap-2">
-                <label htmlFor="calculator-filing-status" className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Filing Status
-                </label>
-                <select
-                  id="calculator-filing-status"
-                  className={`${controlClass} appearance-none`}
-                  value={calcStatus}
-                  onChange={(e) => setCalcStatus(e.target.value as FilingStatus)}
-                >
-                  {FILING_STATUSES.map((fs) => (
-                    <option key={fs.value} value={fs.value}>
-                      {fs.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label htmlFor="year-calculator" className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Tax Year
-                </label>
-                <select
-                  id="year-calculator"
-                  className={`${controlClass} appearance-none`}
-                  value={calcYear}
-                  onChange={(e) => setCalcYear(Number(e.target.value))}
-                >
-                  {calculatorYears.map((y) => (
-                    <option key={y} value={y}>
-                      {y}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex flex-col gap-2 md:col-span-2 lg:col-span-1">
-                <label htmlFor="income" className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Income ($)
-                </label>
-                <input
-                  id="income"
-                  type="number"
-                  className={controlClass}
-                  min={0}
-                  step={100}
-                  value={income}
-                  onChange={(e) => setIncome(Number(e.target.value))}
-                />
-              </div>
-
-              <div className="flex items-end md:col-span-2 lg:col-span-1">
-                <button
-                  className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-brand-600 px-5 text-sm font-semibold text-white shadow-card transition hover:bg-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 disabled:cursor-not-allowed disabled:bg-brand-300"
-                  onClick={runCalc}
-                  disabled={calcLoading}
-                >
-                  {calcLoading ? (
-                    <span className="inline-flex items-center gap-2">
-                      <svg className="h-4 w-4 animate-spin text-white" viewBox="0 0 24 24" aria-hidden="true">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                      </svg>
-                      Calculating…
-                    </span>
-                  ) : (
-                    "Run Calculator"
-                  )}
-                </button>
-              </div>
-            </div>
-          </section>
-
-          {combinedErrors.length > 0 && (
-            <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 shadow-sm">
-              <ul className="list-inside list-disc space-y-1">
-                {combinedErrors.map((msg, idx) => (
-                  <li key={`${msg}-${idx}`}>{msg}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {showCalcSkeleton && (
-            <section className={`${cardSurfaceClass} flex items-center justify-center`}>
-              <Spinner label="Preparing calculation..." />
-            </section>
-          )}
-
-          {calc && (
-            <section className="grid gap-6 lg:grid-cols-2">
-              <div className={`${cardSurfaceClass} space-y-4`}>
+          {isTrendsPage && (
+            <>
+              <section className={`${cardSurfaceClass} space-y-4`}>
                 <div>
-                  <h2 className="text-lg font-semibold text-slate-900">Results</h2>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Based on {income.toLocaleString()} in {calcYear} for{" "}
-                    {FILING_STATUSES.find((fs) => fs.value === calcStatus)?.label ?? calcStatus}.
-                  </p>
+                  <h2 className="text-base font-semibold text-slate-900">Trend Filters</h2>
+                  <p className="text-xs text-slate-500">Adjust the filing status and year range for the historical charts.</p>
                 </div>
-                <ul className="space-y-2 text-sm">
-                  <li className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 text-slate-700">
-                    <span className="font-medium">Total Tax Paid</span>
-                    <span className="font-semibold text-slate-900">{calc.totalTaxPaid}</span>
-                  </li>
-                  <li className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 text-slate-700">
-                    <span className="font-medium">Effective Rate</span>
-                    <span className="font-semibold text-slate-900">{calc.avgRate}</span>
-                  </li>
-                </ul>
-                {calc.message && (
-                  <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                    {calc.message}
+                <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="trend-filing-status" className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Filing Status
+                    </label>
+                    <select
+                      id="trend-filing-status"
+                      className={`${controlClass} appearance-none`}
+                      value={trendStatus}
+                      onChange={(e) => setTrendStatus(e.target.value as FilingStatus)}
+                    >
+                      {FILING_STATUSES.map((fs) => (
+                        <option key={fs.value} value={fs.value}>
+                          {fs.label}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                )}
-                <div className="space-y-2 text-xs text-slate-500">
-                  <h3 className="font-semibold uppercase tracking-wide text-slate-600">How To Read Brackets</h3>
-                  <p>Rates are marginal. Tax paid represents amount due in each bracket, not cumulative totals.</p>
-                  <p>Example: 10% on the first $11k, 12% on the next $33k, and so on.</p>
-                </div>
-              </div>
 
-              <BracketTable brackets={calc.brackets} />
-            </section>
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="start-year" className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Start Year
+                    </label>
+                    <input
+                      id="start-year"
+                      type="number"
+                      className={controlClass}
+                      min={minAvailableYear}
+                      max={maxAvailableYear}
+                      value={startYear}
+                      onChange={(e) => setStartYear(Number(e.target.value))}
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="end-year" className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      End Year
+                    </label>
+                    <input
+                      id="end-year"
+                      type="number"
+                      className={controlClass}
+                      min={minAvailableYear}
+                      max={maxAvailableYear}
+                      value={endYear}
+                      onChange={(e) => setEndYear(Number(e.target.value))}
+                    />
+                  </div>
+                </div>
+              </section>
+
+              {trendErrors.length > 0 && (
+                <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 shadow-sm">
+                  <ul className="list-inside list-disc space-y-1">
+                    {trendErrors.map((msg, idx) => (
+                      <li key={`${msg}-${idx}`}>{msg}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <section className="grid gap-6 lg:grid-cols-2">
+                {showTrendSkeleton ? (
+                  <>
+                    <div className={`${cardSurfaceClass} flex min-h-[18rem] items-center justify-center`}>
+                      <Spinner label="Loading top rate history..." />
+                    </div>
+                    <div className={`${cardSurfaceClass} flex min-h-[18rem] items-center justify-center`}>
+                      <Spinner label="Loading bracket history..." />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <TrendCard
+                      title="Top Marginal Rate Over Time"
+                      data={topRateSeries}
+                      kind="line"
+                      yTickFormatter={(v) => `${v}%`}
+                      seriesName="Top Rate"
+                    />
+
+                    <TrendCard
+                      title="Number of Brackets Over Time"
+                      data={bracketCountSeries}
+                      kind="bar"
+                      seriesName="Bracket Count"
+                    />
+                  </>
+                )}
+              </section>
+            </>
           )}
 
-          <section className="grid gap-6 lg:grid-cols-2">
-            {showTrendSkeleton ? (
-              <>
-                <div className={`${cardSurfaceClass} flex min-h-[18rem] items-center justify-center`}>
-                  <Spinner label="Loading top rate history..." />
+          {isCalculatorPage && (
+            <>
+              <section className={`${cardSurfaceClass} space-y-4`}>
+                <div>
+                  <h2 className="text-base font-semibold text-slate-900">Marginal Calculator</h2>
+                  <p className="text-xs text-slate-500">Choose separate inputs to run the marginal tax calculation.</p>
                 </div>
-                <div className={`${cardSurfaceClass} flex min-h-[18rem] items-center justify-center`}>
-                  <Spinner label="Loading bracket history..." />
+                <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="calculator-filing-status" className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Filing Status
+                    </label>
+                    <select
+                      id="calculator-filing-status"
+                      className={`${controlClass} appearance-none`}
+                      value={calcStatus}
+                      onChange={(e) => setCalcStatus(e.target.value as FilingStatus)}
+                    >
+                      {FILING_STATUSES.map((fs) => (
+                        <option key={fs.value} value={fs.value}>
+                          {fs.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="year-calculator" className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Tax Year
+                    </label>
+                    <select
+                      id="year-calculator"
+                      className={`${controlClass} appearance-none`}
+                      value={calcYear}
+                      onChange={(e) => setCalcYear(Number(e.target.value))}
+                    >
+                      {calculatorYears.map((y) => (
+                        <option key={y} value={y}>
+                          {y}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col gap-2 md:col-span-2 lg:col-span-1">
+                    <label htmlFor="income" className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Income ($)
+                    </label>
+                    <input
+                      id="income"
+                      type="number"
+                      className={controlClass}
+                      min={0}
+                      step={100}
+                      value={income}
+                      onChange={(e) => setIncome(Number(e.target.value))}
+                    />
+                  </div>
+
+                  <div className="flex items-end md:col-span-2 lg:col-span-1">
+                    <button
+                      className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-brand-600 px-5 text-sm font-semibold text-white shadow-card transition hover:bg-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 disabled:cursor-not-allowed disabled:bg-brand-300"
+                      onClick={runCalc}
+                      disabled={calcLoading}
+                    >
+                      {calcLoading ? (
+                        <span className="inline-flex items-center gap-2">
+                          <svg className="h-4 w-4 animate-spin text-white" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                          </svg>
+                          Calculating…
+                        </span>
+                      ) : (
+                        "Run Calculator"
+                      )}
+                    </button>
+                  </div>
                 </div>
-              </>
-            ) : (
-              <>
-                <TrendCard
-                  title="Top Marginal Rate Over Time"
-                  data={topRateSeries}
-                  kind="line"
-                  yTickFormatter={(v) => `${v}%`}
-                  seriesName="Top Rate"
-                />
+              </section>
 
-                <TrendCard
-                  title="Number of Brackets Over Time"
-                  data={bracketCountSeries}
-                  kind="bar"
-                  seriesName="Bracket Count"
-                />
-              </>
-            )}
-          </section>
+              {calculatorErrors.length > 0 && (
+                <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 shadow-sm">
+                  <ul className="list-inside list-disc space-y-1">
+                    {calculatorErrors.map((msg, idx) => (
+                      <li key={`${msg}-${idx}`}>{msg}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
-          
+              {showCalcSkeleton && (
+                <section className={`${cardSurfaceClass} flex items-center justify-center`}>
+                  <Spinner label="Preparing calculation..." />
+                </section>
+              )}
+
+              {calc && (
+                <section className="grid gap-6 lg:grid-cols-2">
+                  <div className={`${cardSurfaceClass} space-y-4`}>
+                    <div>
+                      <h2 className="text-lg font-semibold text-slate-900">Results</h2>
+                      <p className="mt-1 text-sm text-slate-500">
+                        Based on {income.toLocaleString()} in {calcYear} for{" "}
+                        {FILING_STATUSES.find((fs) => fs.value === calcStatus)?.label ?? calcStatus}.
+                      </p>
+                    </div>
+                    <ul className="space-y-2 text-sm">
+                      <li className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 text-slate-700">
+                        <span className="font-medium">Total Tax Paid</span>
+                        <span className="font-semibold text-slate-900">{calc.totalTaxPaid}</span>
+                      </li>
+                      <li className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 text-slate-700">
+                        <span className="font-medium">Effective Rate</span>
+                        <span className="font-semibold text-slate-900">{calc.avgRate}</span>
+                      </li>
+                    </ul>
+                    {calc.message && (
+                      <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                        {calc.message}
+                      </div>
+                    )}
+                    <div className="space-y-2 text-xs text-slate-500">
+                      <h3 className="font-semibold uppercase tracking-wide text-slate-600">How To Read Brackets</h3>
+                      <p>Rates are marginal. Tax paid represents amount due in each bracket, not cumulative totals.</p>
+                      <p>Example: 10% on the first $11k, 12% on the next $33k, and so on.</p>
+                    </div>
+                  </div>
+
+                  <BracketTable brackets={calc.brackets} />
+                </section>
+              )}
+            </>
+          )}
         </main>
 
         <footer className="mt-12 text-center text-xs text-slate-500">
