@@ -10,20 +10,20 @@ type AppPage = "trends" | "calculator";
 const DEFAULT_PAGE: AppPage = "trends";
 
 const getPageFromHash = (): AppPage => {
-  if (typeof window === "undefined") {
+  if (globalThis.window === undefined) {
     return DEFAULT_PAGE;
   }
-  const normalizedHash = window.location.hash.replace("#", "").toLowerCase();
+  const normalizedHash = globalThis.window.location.hash.replace("#", "").toLowerCase();
   return normalizedHash === "calculator" ? "calculator" : DEFAULT_PAGE;
 };
 
 const syncHashToPage = (page: AppPage) => {
-  if (typeof window === "undefined") {
+  if (globalThis.window === undefined) {
     return;
   }
   const targetHash = `#${page}`;
-  if (window.location.hash !== targetHash) {
-    window.history.replaceState(null, "", targetHash);
+  if (globalThis.window.location.hash !== targetHash) {
+    globalThis.window.history.replaceState(null, "", targetHash);
   }
 };
 
@@ -34,12 +34,12 @@ export default function TaxRatesApp() {
   const [yearsError, setYearsError] = useState<string>("");
 
   useEffect(() => {
-    if (typeof window === "undefined") {
+    if (globalThis.window === undefined) {
       return;
     }
     const handleHashChange = () => setActivePage(getPageFromHash());
-    window.addEventListener("hashchange", handleHashChange);
-    return () => window.removeEventListener("hashchange", handleHashChange);
+    globalThis.window.addEventListener("hashchange", handleHashChange);
+    return () => globalThis.window.removeEventListener("hashchange", handleHashChange);
   }, []);
 
   useEffect(() => {

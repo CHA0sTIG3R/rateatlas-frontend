@@ -6,9 +6,7 @@ import {
   CURRENT_YEAR,
   FILING_STATUSES,
   type FilingStatus,
-  type TaxCalculation,
-  type TaxInput
-} from "../types";
+  type TaxCalculation} from "../types";
 import { cardSurfaceClass, controlClass } from "../styles";
 
 interface CalculatorPageProps {
@@ -41,7 +39,7 @@ export default function CalculatorPage({ availableYears, yearsError }: Readonly<
   useEffect(() => {
     if (!availableYears.length) return;
     const maxYear = availableYears[0];
-    const minYear = availableYears.at(-1)!;
+    const minYear = availableYears.at(-1) ?? maxYear;
     const clamp = (value: number) => Math.min(Math.max(value, minYear), maxYear);
     setCalcYear((prev) => clamp(prev));
   }, [availableYears]);
@@ -50,7 +48,7 @@ export default function CalculatorPage({ availableYears, yearsError }: Readonly<
     try {
       setCalcError("");
       setCalcLoading(true);
-      const result = await fetchCalculation({ year: calcYear, status: calcStatus, income } as TaxInput);
+      const result = await fetchCalculation({ year: calcYear, status: calcStatus, income });
       setCalc(result);
     } catch (e) {
       console.error("Calculation error:", e);

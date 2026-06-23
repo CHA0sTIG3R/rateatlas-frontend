@@ -29,12 +29,12 @@ export default function TrendsPage({ availableYears, yearsError }: Readonly<Tren
   const [trendsError, setTrendsError] = useState<string>("");
 
   const maxAvailableYear = availableYears.length ? availableYears[0] : FALLBACK_MAX_YEAR;
-  const minAvailableYear = availableYears.length ? availableYears.at(-1)! : FALLBACK_MIN_YEAR;
+  const minAvailableYear = availableYears.length ? availableYears.at(-1) ?? maxAvailableYear : FALLBACK_MIN_YEAR;
 
   useEffect(() => {
     if (!availableYears.length) return;
     const maxYear = availableYears[0];
-    const minYear = availableYears.at(-1)!;
+    const minYear = availableYears.at(-1) ?? maxYear;
     const clamp = (value: number) => Math.min(Math.max(value, minYear), maxYear);
     setStartYear((prev) => clamp(prev));
     setEndYear((prev) => clamp(prev));
