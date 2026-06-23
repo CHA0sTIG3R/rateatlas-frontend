@@ -53,9 +53,6 @@ export default function TrendsPage({ availableYears, yearsError }: Readonly<Tren
         if (!cancelled) {
           setTopRateSeries(top);
           setBracketCountSeries(brackets);
-          console.log("Trend data updated");
-          console.log("Top Rate Series:", top);
-          console.log("Bracket Count Series:", brackets);
         }
       } catch (e) {
         console.error("Error loading trends:", e);

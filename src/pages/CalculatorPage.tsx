@@ -50,9 +50,7 @@ export default function CalculatorPage({ availableYears, yearsError }: Readonly<
     try {
       setCalcError("");
       setCalcLoading(true);
-      console.log("Running calculation for:", { year: calcYear, status: calcStatus, income });
       const result = await fetchCalculation({ year: calcYear, status: calcStatus, income } as TaxInput);
-      console.log("Calculation result:", result);
       setCalc(result);
     } catch (e) {
       console.error("Calculation error:", e);
