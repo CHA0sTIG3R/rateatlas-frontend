@@ -47,7 +47,17 @@ export default function TrendCard({ title, data, kind, yTickFormatter, seriesNam
               <Tooltip
                 contentStyle={{ borderRadius: 12, borderColor: "#cbd5f5" }}
                 labelStyle={{ fontWeight: 600 }}
-                formatter={(v: number) => [yTickFormatter ? yTickFormatter(v) : String(v), seriesName]}
+                formatter={(v: any) => {
+                  let val: number | undefined;
+
+                  if (typeof v === "number") {
+                    val = v;
+                  } else if (typeof v === "string" && !Number.isNaN(Number(v))) {
+                    val = Number(v);
+                  }
+
+                  return [val !== undefined && yTickFormatter ? yTickFormatter(val) : String(v ?? ""), seriesName];
+                }}
                 labelFormatter={(l) => `Year ${l}`}
               />
               <Legend />
@@ -78,7 +88,7 @@ export default function TrendCard({ title, data, kind, yTickFormatter, seriesNam
               <Tooltip
                 contentStyle={{ borderRadius: 12, borderColor: "#cbd5f5" }}
                 labelStyle={{ fontWeight: 600 }}
-                formatter={(v: number) => [String(v), seriesName]}
+                formatter={(v: any) => [String(v ?? ""), seriesName]}
                 labelFormatter={(l) => `Year ${l}`}
               />
               <Legend />
