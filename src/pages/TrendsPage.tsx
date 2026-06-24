@@ -137,13 +137,13 @@ export default function TrendsPage({ availableYears, yearsError }: Readonly<Tren
         </div>
       )}
 
-      <section className="grid gap-6 lg:grid-cols-2">
+      <section className="flex flex-col gap-6">
         {showTrendSkeleton ? (
           <>
             <div className={`${cardSurfaceClass} flex min-h-[18rem] items-center justify-center`}>
               <Spinner label="Loading top rate history..." />
             </div>
-            <div className={`${cardSurfaceClass} flex min-h-[18rem] items-center justify-center`}>
+            <div className={`${cardSurfaceClass} flex min-h-[24rem] items-center justify-center`}>
               <Spinner label="Loading bracket history..." />
             </div>
           </>
@@ -162,6 +162,7 @@ export default function TrendsPage({ availableYears, yearsError }: Readonly<Tren
               data={bracketCountSeries}
               kind="bar"
               seriesName="Bracket Count"
+              heightClassName="h-96"
             />
           </>
         )}

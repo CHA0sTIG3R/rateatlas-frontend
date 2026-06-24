@@ -18,16 +18,24 @@ interface TrendCardProps {
   kind: "line" | "bar";
   yTickFormatter?: (v: number) => string;
   seriesName: string;
+  heightClassName?: string;
 }
 
-export default function TrendCard({ title, data, kind, yTickFormatter, seriesName }: Readonly<TrendCardProps>) {
+export default function TrendCard({
+  title,
+  data,
+  kind,
+  yTickFormatter,
+  seriesName,
+  heightClassName = "h-72"
+}: Readonly<TrendCardProps>) {
   return (
     <div className="flex h-full flex-col gap-4 rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-card backdrop-blur">
       <div>
         <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
         <p className="text-xs uppercase tracking-wide text-slate-500">Updated dynamically from IRS datasets</p>
       </div>
-      <div className="h-72 w-full">
+      <div className={`${heightClassName} w-full`}>
         <ResponsiveContainer width="100%" height="100%">
           {kind === "line" ? (
             <LineChart data={data} margin={{ top: 12, right: 12, bottom: 8, left: 0 }}>
