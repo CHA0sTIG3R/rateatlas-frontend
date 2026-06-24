@@ -72,16 +72,37 @@ export default function TaxRatesApp() {
     };
   }, []);
 
-  const togglePage = () => {
-    setActivePage((prev) => (prev === "trends" ? "calculator" : "trends"));
-  };
-
   const isBootstrappingYears = yearsLoading && !availableYears.length;
   const isTrendsPage = activePage === "trends";
   const isCalculatorPage = activePage === "calculator";
 
+  const navTabClass = (active: boolean) =>
+    `rounded-full px-4 py-2 text-sm font-semibold transition ${
+      active ? "bg-brand-600 text-white shadow-sm" : "text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+    }`;
+
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900">
+      <nav className="w-full border-b border-slate-200 bg-white">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
+          <span className="text-xl font-bold tracking-tight text-slate-900">
+            Rate<span className="text-brand-600">Atlas</span>
+          </span>
+          <div className="flex items-center gap-1 rounded-full bg-slate-100 p-1">
+            <button type="button" className={navTabClass(isTrendsPage)} onClick={() => setActivePage("trends")}>
+              Historical Trends
+            </button>
+            <button
+              type="button"
+              className={navTabClass(isCalculatorPage)}
+              onClick={() => setActivePage("calculator")}
+            >
+              Tax Calculator
+            </button>
+          </div>
+        </div>
+      </nav>
+
       <div className="relative mx-auto max-w-7xl px-4 pb-16 pt-12 sm:px-6 lg:px-8">
         <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 bg-gradient-to-br from-brand-500/25 via-brand-300/20 to-transparent blur-3xl" />
 
@@ -89,22 +110,13 @@ export default function TaxRatesApp() {
           <span className="inline-flex w-fit items-center gap-2 rounded-full bg-brand-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-brand-700 ring-1 ring-brand-500/30">
             Federal Income Tax
           </span>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="space-y-2">
-              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                Marginal Tax Insights
-              </h1>
-              <p className="max-w-2xl text-sm text-slate-600 sm:text-base">
-                Explore historical trends and compute marginal &amp; effective rates across filing statuses and years.
-              </p>
-            </div>
-            <button
-              type="button"
-              className="inline-flex items-center justify-center rounded-xl border border-brand-200 bg-white/90 px-4 py-2 text-sm font-semibold text-brand-700 shadow-card transition hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-200"
-              onClick={togglePage}
-            >
-              {isTrendsPage ? "Open Calculator" : "View Trends"}
-            </button>
+          <div className="space-y-2">
+            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+              Marginal Tax Insights
+            </h1>
+            <p className="max-w-2xl text-sm text-slate-600 sm:text-base">
+              Explore historical trends and compute marginal &amp; effective rates across filing statuses and years.
+            </p>
           </div>
         </header>
 
