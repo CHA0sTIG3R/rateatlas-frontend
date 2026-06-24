@@ -83,8 +83,8 @@ export default function TaxRatesApp() {
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900">
-      <nav className="w-full border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
+      <nav className="sticky top-0 z-20 w-full border-b border-slate-200 bg-white">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
           <span className="text-xl font-bold tracking-tight text-slate-900">
             Rate<span className="text-brand-600">Atlas</span>
           </span>
