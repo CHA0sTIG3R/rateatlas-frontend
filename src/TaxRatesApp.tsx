@@ -129,21 +129,23 @@ export default function TaxRatesApp() {
       <div className="relative mx-auto max-w-7xl px-4 pb-16 pt-12 sm:px-6 lg:px-8">
         <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 bg-gradient-to-br from-brand-500/25 via-brand-300/20 to-transparent blur-3xl" />
 
-        <header className="mb-10 flex flex-col gap-4">
-          {!freshnessLoading && !freshnessError && freshnessYear !== null && (
-            <span className="inline-flex w-fit items-center gap-2 rounded-full bg-brand-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-brand-700 ring-1 ring-brand-500/30">
-              Last updated: {freshnessYear}
-            </span>
-          )}
-          <div className="space-y-2">
-            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-              Marginal Tax Insights
-            </h1>
-            <p className="max-w-2xl text-sm text-slate-600 sm:text-base">
-              Explore 160 years of U.S. federal income tax history.
-            </p>
-          </div>
-        </header>
+        {isTrendsPage && (
+          <header className="mb-10 flex flex-col gap-4">
+            {!freshnessLoading && !freshnessError && freshnessYear !== null && (
+              <span className="inline-flex w-fit items-center gap-2 rounded-full bg-brand-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-brand-700 ring-1 ring-brand-500/30">
+                Last updated: {freshnessYear}
+              </span>
+            )}
+            <div className="space-y-2">
+              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+                Marginal Tax Insights
+              </h1>
+              <p className="max-w-2xl text-sm text-slate-600 sm:text-base">
+                Explore 160 years of U.S. federal income tax history.
+              </p>
+            </div>
+          </header>
+        )}
 
         <main className="space-y-10">
           {isBootstrappingYears && (

@@ -178,6 +178,12 @@ export default function CalculatorPage({ availableYears, yearsError }: Readonly<
         </section>
       )}
 
+      {!calc && !showCalcSkeleton && calculatorErrors.length === 0 && (
+        <div className="flex min-h-[14rem] items-center justify-center text-center text-sm text-slate-400">
+          Enter your income and filing status to see your marginal breakdown.
+        </div>
+      )}
+
       {calc && (
         <section className="grid gap-6 lg:grid-cols-2">
           <div className={`${cardSurfaceClass} space-y-4`}>
