@@ -50,3 +50,12 @@ export const FILING_STATUSES: { label: string; value: FilingStatus }[] = [
 // Current year and default start year for history range
 export const CURRENT_YEAR = new Date().getFullYear();
 export const DEFAULT_START = 1924;
+
+// Response from /api/v1/datasets/latest
+export interface DatasetFreshness {
+  latestAvailableTaxYear: number;
+  irsPageLastUpdated: string;
+  lastIngestedAt: string;
+  freshnessState: string;
+  sourceUrl: string;
+}

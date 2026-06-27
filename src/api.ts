@@ -1,5 +1,5 @@
 import axios, { type AxiosInstance } from "axios";
-import type { FilingStatus, HistoryMetric, HistoryPoint, TaxCalculation, TaxInput } from "./types";
+import type { DatasetFreshness, FilingStatus, HistoryMetric, HistoryPoint, TaxCalculation, TaxInput } from "./types";
 
 const BASE =
     import.meta.env.RATE_ATLAS_API_BASE_URL ??
@@ -43,5 +43,11 @@ export async function fetchHistory(
 
 export async function fetchCalculation(input: TaxInput): Promise<TaxCalculation> {
     const res = await api.post<TaxCalculation>("/tax/breakdown", input);
+    return res.data;
+}
+
+
+export async function fetchDatasetFreshness(): Promise<DatasetFreshness> {
+    const res = await api.get<DatasetFreshness>("/datasets/latest");
     return res.data;
 }
