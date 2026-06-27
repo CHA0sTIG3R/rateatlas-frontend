@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import TrendsPage from "./pages/TrendsPage";
 import CalculatorPage from "./pages/CalculatorPage";
 import Spinner from "./components/Spinner";
-import { fetchAvailableYears } from "./api";
+import { fetchAvailableYears, fetchDatasetFreshness } from "./api";
 import { cardSurfaceClass } from "./styles";
 
 type AppPage = "trends" | "calculator";
@@ -32,6 +32,9 @@ export default function TaxRatesApp() {
   const [availableYears, setAvailableYears] = useState<number[]>([]);
   const [yearsLoading, setYearsLoading] = useState<boolean>(true);
   const [yearsError, setYearsError] = useState<string>("");
+  const [freshnessYear, setFreshnessYear] = useState<number | null>(null);
+  const [freshnessLoading, setFreshnessLoading] = useState<boolean>(true);
+  const [freshnessError, setFreshnessError] = useState<boolean>(false);
 
   useEffect(() => {
     if (globalThis.window === undefined) {
@@ -65,6 +68,26 @@ export default function TaxRatesApp() {
         if (!cancelled) setYearsError("Failed to fetch available years. Check API URL & CORS.");
       } finally {
         if (!cancelled) setYearsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        setFreshnessError(false);
+        setFreshnessLoading(true);
+        const freshness = await fetchDatasetFreshness();
+        if (!cancelled) setFreshnessYear(freshness.latestAvailableTaxYear);
+      } catch (e) {
+        console.error("Error fetching dataset freshness:", e);
+        if (!cancelled) setFreshnessError(true);
+      } finally {
+        if (!cancelled) setFreshnessLoading(false);
       }
     })();
     return () => {
