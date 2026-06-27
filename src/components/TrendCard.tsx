@@ -19,6 +19,7 @@ interface TrendCardProps {
   yTickFormatter?: (v: number) => string;
   seriesName: string;
   heightClassName?: string;
+  yearRangeLabel: string;
 }
 
 export default function TrendCard({
@@ -27,13 +28,14 @@ export default function TrendCard({
   kind,
   yTickFormatter,
   seriesName,
-  heightClassName = "h-72"
+  heightClassName = "h-72",
+  yearRangeLabel
 }: Readonly<TrendCardProps>) {
   return (
     <div className="flex h-full flex-col gap-4 rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-card backdrop-blur">
       <div>
         <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
-        <p className="text-xs uppercase tracking-wide text-slate-500">Updated dynamically from IRS datasets</p>
+        <p className="text-xs uppercase tracking-wide text-slate-500">{yearRangeLabel}</p>
       </div>
       <div className={`${heightClassName} w-full`}>
         <ResponsiveContainer width="100%" height="100%">

@@ -9,15 +9,33 @@ import {
   type TaxCalculation} from "../types";
 import { cardSurfaceClass, controlClass } from "../styles";
 
+const CALCULATOR_STORAGE_KEY = "rateatlas.calculator-inputs";
+
+interface StoredCalculatorInputs {
+  year: number;
+  status: FilingStatus;
+  income: number;
+}
+
+function readStoredCalculatorInputs(): StoredCalculatorInputs | null {
+  try {
+    const raw = localStorage.getItem(CALCULATOR_STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as StoredCalculatorInputs) : null;
+  } catch {
+    return null;
+  }
+}
+
 interface CalculatorPageProps {
   availableYears: number[];
   yearsError: string;
 }
 
 export default function CalculatorPage({ availableYears, yearsError }: Readonly<CalculatorPageProps>) {
-  const [calcStatus, setCalcStatus] = useState<FilingStatus>(FILING_STATUSES[0].value);
-  const [calcYear, setCalcYear] = useState<number>(CURRENT_YEAR - 1);
-  const [income, setIncome] = useState<number>(85000);
+  const storedInputs = useMemo(() => readStoredCalculatorInputs(), []);
+  const [calcStatus, setCalcStatus] = useState<FilingStatus>(storedInputs?.status ?? FILING_STATUSES[0].value);
+  const [calcYear, setCalcYear] = useState<number>(storedInputs?.year ?? CURRENT_YEAR - 1);
+  const [income, setIncome] = useState<number>(storedInputs?.income ?? 85000);
   const [calc, setCalc] = useState<TaxCalculation | null>(null);
   const [calcLoading, setCalcLoading] = useState<boolean>(false);
   const [calcError, setCalcError] = useState<string>("");
@@ -37,12 +55,10 @@ export default function CalculatorPage({ availableYears, yearsError }: Readonly<
   }, [availableYears, fallbackCalculatorYears]);
 
   useEffect(() => {
-    if (!availableYears.length) return;
-    const maxYear = availableYears[0];
-    const minYear = availableYears.at(-1) ?? maxYear;
-    const clamp = (value: number) => Math.min(Math.max(value, minYear), maxYear);
-    setCalcYear((prev) => clamp(prev));
-  }, [availableYears]);
+    if (calculatorYears.length && !calculatorYears.includes(calcYear)) {
+      setCalcYear(CURRENT_YEAR - 1);
+    }
+  }, [calculatorYears, calcYear]);
 
   async function runCalc() {
     try {
@@ -50,6 +66,10 @@ export default function CalculatorPage({ availableYears, yearsError }: Readonly<
       setCalcLoading(true);
       const result = await fetchCalculation({ year: calcYear, status: calcStatus, income });
       setCalc(result);
+      localStorage.setItem(
+        CALCULATOR_STORAGE_KEY,
+        JSON.stringify({ year: calcYear, status: calcStatus, income })
+      );
     } catch (e) {
       console.error("Calculation error:", e);
       setCalcError("Calculation failed. Check endpoint and query params.");

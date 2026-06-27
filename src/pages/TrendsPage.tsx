@@ -68,6 +68,7 @@ export default function TrendsPage({ availableYears, yearsError }: Readonly<Tren
 
   const showTrendSkeleton = trendsLoading && !topRateSeries.length && !bracketCountSeries.length;
   const trendErrors = [yearsError, trendsError].filter(Boolean);
+  const yearRangeLabel = `${startYear} – ${endYear}`;
 
   return (
     <>
@@ -155,6 +156,7 @@ export default function TrendsPage({ availableYears, yearsError }: Readonly<Tren
               kind="line"
               yTickFormatter={(v) => `${v}%`}
               seriesName="Top Rate"
+              yearRangeLabel={yearRangeLabel}
             />
 
             <TrendCard
@@ -163,6 +165,7 @@ export default function TrendsPage({ availableYears, yearsError }: Readonly<Tren
               kind="bar"
               seriesName="Bracket Count"
               heightClassName="h-96"
+              yearRangeLabel={yearRangeLabel}
             />
           </>
         )}
